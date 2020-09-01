@@ -1,9 +1,127 @@
 ﻿@page "/Cake"
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
 <h3>Cake</h3>
+@if (Loading)
+{
+	<p>Loading...</p>
+}
+else
+{
+
+	@if (!IsIngredients)
+	{
+		<p>You have no ingredients. Please add some <a href="/Ingredients">here</a></p>
+	}
+	 else
+	{
+		<MatButton OnClick="@OpenAddDialog" Icon="add" Label="Add Ingredient"></MatButton>
+
+		<MatTable Items="@IngredientsUsed" Class="mat-elevation-z5" AllowSelection="true" ShowPaging="false" PageSize="20">
+			<MatTableHeader>
+				<th width="50%">Ingredient</th>
+				<th>Quantity Used</th>
+				<th width="20%">Unit Type</th>
+				<th>Cost</th>
+			</MatTableHeader>
+			<MatTableRow>
+				<td>@context..Name</td>
+				<td>@context.Quantity</td>
+				<td>@context.UnitType</td>
+				<td>@context.Cost.ToString("0.##")</td>
+
+			</MatTableRow>
+		</MatTable>
+		
+	}
+
+
+<MatDialog @bind-IsOpen="@dialogIsOpen">
+	<MatDialogTitle>Add Ingredient</MatDialogTitle>
+	<MatDialogContent>
+		<MatSelectItem @bind-Value="SelectedIngredient" Items="@IngredientsList">
+			<ItemTemplate>
+				<span>@context?.Name</span>
+			</ItemTemplate>
+		</MatSelectItem>
+		<MatTextField @bind-Value="@AmountUsed"></MatTextField>
+	</MatDialogContent>
+	<MatDialogActions>
+		<MatButton Disabled="@(!AddIngredientCheck)" OnClick="@AddIngredient">Add</MatButton>
+		<MatButton OnClick="@CloseAddDialog">Cancel</MatButton>
+	</MatDialogActions>
+</MatDialog>
+}
+
+
 
 @code {
 
-	private List<Ingredient> Ingredients { get; set; }
+	private List<Ingredient> IngredientsList { get; set; }
+	private CakeCost CakeItem { get; set; }
+
+	private Ingredient SelectedIngredient { get; set; }
+	private double AmountUsed { get; set; }
+
+	private List<IngredientUsed> IngredientsUsed { get; set; }
+
+	private bool IsIngredients { get; set; }
+	private bool dialogIsOpen = false;
+	private bool AddIngredientCheck
+	{
+		get
+		{
+			if (SelectedIngredient != null && (AmountUsed != null && AmountUsed > 0))
+				return true;
+			else
+				return false;
+		}
+	}
+
+	private bool Loading = true;
+
+	protected override async Task OnInitializedAsync()
+	{
+		CakeItem = new CakeCost();
+		IngredientsUsed = new List<IngredientUsed>();
+
+		var ingredients = await LocalStorage.GetItemAsync<List<Ingredient>>("ingredients");
+		if (ingredients != null)
+		{
+			IngredientsList = ingredients;
+			IsIngredients = true;
+
+		}
+		else
+		{
+			IsIngredients = false;
+		}
+		Loading = false;
+	}
+
+	private async Task OpenAddDialog()
+	{
+		dialogIsOpen = true;
+		AmountUsed = 0;
+	}
+
+	private async Task CloseAddDialog()
+	{
+		dialogIsOpen = false;
+		AmountUsed = 0;
+		SelectedIngredient = null;
+	}
+
+	private async Task AddIngredient()
+	{
+		IngredientsUsed.Add(new IngredientUsed(SelectedIngredient,AmountUsed));
+		await CloseAddDialog();
+	}
+
+	private double CalcCost(double cost, double amount, double used)
+	{
+		var percentage = 
+	}
+
 
 }

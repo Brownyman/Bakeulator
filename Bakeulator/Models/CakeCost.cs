@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Bakeulator.Models
 {
-	public class Cake
+	public class CakeCost
 	{
 		public string Name { get; set; }
 		public double LabourCost { get; set; }
