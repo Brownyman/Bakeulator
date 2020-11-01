@@ -25,6 +25,18 @@ app {
     display: flex;
     align-items: center;
 }
+/*
+table {
+    width: auto;
+}
+
+td {
+    white-space: nowrap;
+}
+
+    td:last-child {
+        width: 100%;
+    }*/
 
 .main {
     flex: 1;

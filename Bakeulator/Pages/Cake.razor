@@ -19,20 +19,21 @@ else
 
 		<MatTable Items="@IngredientsUsed" Class="mat-elevation-z5" AllowSelection="true" ShowPaging="false" PageSize="20">
 			<MatTableHeader>
-				<th width="50%">Ingredient</th>
+				<th style="width=50%">Ingredient</th>
 				<th>Quantity Used</th>
-				<th width="20%">Unit Type</th>
+				<th>Unit Type</th>
 				<th>Cost</th>
 			</MatTableHeader>
 			<MatTableRow>
-				<td>@context..Name</td>
-				<td>@context.Quantity</td>
-				<td>@context.UnitType</td>
-				<td>@context.Cost.ToString("0.##")</td>
+				<td>@context.Ingredient.Name</td>
+				<td>@context.AmountUsed</td>
+				<td>@context.Ingredient.UnitType</td>
+				<td>@context.UsageCost.ToString("£0.##")</td>
 
 			</MatTableRow>
 		</MatTable>
-		
+
+		<h3>Total: @TotalCost.ToString("£0.##")</h3>
 	}
 
 
@@ -44,7 +45,8 @@ else
 				<span>@context?.Name</span>
 			</ItemTemplate>
 		</MatSelectItem>
-		<MatTextField @bind-Value="@AmountUsed"></MatTextField>
+		<MatTextField @bind-Value="@AmountUsed" Label="Quantity" On/>
+		<MatTextField Value="@SelectedIngredient?.UnitType" Label="Measurement" ReadOnly="true"/>
 	</MatDialogContent>
 	<MatDialogActions>
 		<MatButton Disabled="@(!AddIngredientCheck)" OnClick="@AddIngredient">Add</MatButton>
@@ -59,6 +61,8 @@ else
 
 	private List<Ingredient> IngredientsList { get; set; }
 	private CakeCost CakeItem { get; set; }
+
+	private double TotalCost = 0d;
 
 	private Ingredient SelectedIngredient { get; set; }
 	private double AmountUsed { get; set; }
@@ -116,12 +120,25 @@ else
 	{
 		IngredientsUsed.Add(new IngredientUsed(SelectedIngredient,AmountUsed));
 		await CloseAddDialog();
+		await CalcTotals();
 	}
 
-	private double CalcCost(double cost, double amount, double used)
+	private async Task SumIngredientTotal()
 	{
-		var percentage = 
+		if (IngredientsUsed != null && IngredientsUsed.Count() > 0)
+		{
+			TotalCost = IngredientsUsed.Sum(x => x.UsageCost);
+		}
 	}
 
+	private async Task SumLabourCosts()
+	{
 
+	}
+
+	private async Task CalcTotals()
+	{
+		await SumIngredientTotal();
+		await SumLabourCosts();
+	}
 }
