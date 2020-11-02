@@ -1,144 +1,154 @@
 ﻿@page "/Cake"
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
-<h3>Cake</h3>
-@if (Loading)
-{
-	<p>Loading...</p>
-}
-else
-{
+<div style="padding: 5px; border: 1px solid white; max-width:1280px;">
+    <h3>Cake</h3>
+    @if (Loading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
 
-	@if (!IsIngredients)
-	{
-		<p>You have no ingredients. Please add some <a href="/Ingredients">here</a></p>
-	}
-	 else
-	{
-		<MatButton OnClick="@OpenAddDialog" Icon="add" Label="Add Ingredient"></MatButton>
+        @if (!IsIngredients)
+        {
+            <p>You have no ingredients. Please add some <a href="/Ingredients">here</a></p>
+        }
+        else
+        {
+            <div>
 
-		<MatTable Items="@IngredientsUsed" Class="mat-elevation-z5" AllowSelection="true" ShowPaging="false" PageSize="20">
-			<MatTableHeader>
-				<th style="width=50%">Ingredient</th>
-				<th>Quantity Used</th>
-				<th>Unit Type</th>
-				<th>Cost</th>
-			</MatTableHeader>
-			<MatTableRow>
-				<td>@context.Ingredient.Name</td>
-				<td>@context.AmountUsed</td>
-				<td>@context.Ingredient.UnitType</td>
-				<td>@context.UsageCost.ToString("£0.##")</td>
+                <MatButton OnClick="@OpenAddDialog" Icon="add" Label="Add Ingredient"></MatButton>
 
-			</MatTableRow>
-		</MatTable>
+                @*// for saving images of the cake - WIP
+                <MatButton OnClick="@OpenAddDialog" Style="max-height:200px;max-width:200px; float:right;">
 
-		<h3>Total: @TotalCost.ToString("£0.##")</h3>
-	}
+                        <img src="/Images/placeholder.png" alt="Alternate Text" style="height:100%; width:100%"/>
+                    </MatButton>*@
+            </div>
+
+            <MatTable Items="@IngredientsUsed" Class="mat-elevation-z5" AllowSelection="true" ShowPaging="false" PageSize="20" Style="display:inline-table;">
+                <MatTableHeader>
+                    <th style="width:50%;">Ingredient</th>
+                    <th style="width:20%;">Quantity Used</th>
+                    <th style="width:20%;">Unit Type</th>
+                    <th style="width:10%;">Cost</th>
+                </MatTableHeader>
+                <MatTableRow>
+                    <td>@context.Ingredient.Name</td>
+                    <td>@context.AmountUsed</td>
+                    <td>@context.Ingredient.UnitType</td>
+                    <td>@context.UsageCost.ToString("£0.##")</td>
+
+                </MatTableRow>
+            </MatTable>
+
+            <h3>Total: @TotalCost.ToString("£0.##")</h3>
+        }
 
 
-<MatDialog @bind-IsOpen="@dialogIsOpen">
-	<MatDialogTitle>Add Ingredient</MatDialogTitle>
-	<MatDialogContent>
-		<MatSelectItem @bind-Value="SelectedIngredient" Items="@IngredientsList">
-			<ItemTemplate>
-				<span>@context?.Name</span>
-			</ItemTemplate>
-		</MatSelectItem>
-		<MatTextField @bind-Value="@AmountUsed" Label="Quantity" On/>
-		<MatTextField Value="@SelectedIngredient?.UnitType" Label="Measurement" ReadOnly="true"/>
-	</MatDialogContent>
-	<MatDialogActions>
-		<MatButton Disabled="@(!AddIngredientCheck)" OnClick="@AddIngredient">Add</MatButton>
-		<MatButton OnClick="@CloseAddDialog">Cancel</MatButton>
-	</MatDialogActions>
-</MatDialog>
-}
+        <MatDialog @bind-IsOpen="@dialogIsOpen">
+            <MatDialogTitle>Add Ingredient</MatDialogTitle>
+            <MatDialogContent>
+                <MatSelectItem @bind-Value="SelectedIngredient" Items="@IngredientsList">
+                    <ItemTemplate>
+                        <span>@context?.Name</span>
+                    </ItemTemplate>
+                </MatSelectItem>
+                <MatTextField @bind-Value="@AmountUsed" Label="Quantity" On />
+                <MatTextField Value="@SelectedIngredient?.UnitType" Label="Measurement" ReadOnly="true" />
+            </MatDialogContent>
+            <MatDialogActions>
+                <MatButton Disabled="@(!AddIngredientCheck)" OnClick="@AddIngredient">Add</MatButton>
+                <MatButton OnClick="@CloseAddDialog">Cancel</MatButton>
+            </MatDialogActions>
+        </MatDialog>
+    }
 
+</div>
 
 
 @code {
 
-	private List<Ingredient> IngredientsList { get; set; }
-	private CakeCost CakeItem { get; set; }
+    private List<Ingredient> IngredientsList { get; set; }
+    private CakeCost CakeItem { get; set; }
 
-	private double TotalCost = 0d;
+    private double TotalCost = 0d;
 
-	private Ingredient SelectedIngredient { get; set; }
-	private double AmountUsed { get; set; }
+    private Ingredient SelectedIngredient { get; set; }
+    private double AmountUsed { get; set; }
 
-	private List<IngredientUsed> IngredientsUsed { get; set; }
+    private List<IngredientUsed> IngredientsUsed { get; set; }
 
-	private bool IsIngredients { get; set; }
-	private bool dialogIsOpen = false;
-	private bool AddIngredientCheck
-	{
-		get
-		{
-			if (SelectedIngredient != null && (AmountUsed != null && AmountUsed > 0))
-				return true;
-			else
-				return false;
-		}
-	}
+    private bool IsIngredients { get; set; }
+    private bool dialogIsOpen = false;
+    private bool AddIngredientCheck
+    {
+        get
+        {
+            if (SelectedIngredient != null && AmountUsed > 0)
+                return true;
+            else
+                return false;
+        }
+    }
 
-	private bool Loading = true;
+    private bool Loading = true;
 
-	protected override async Task OnInitializedAsync()
-	{
-		CakeItem = new CakeCost();
-		IngredientsUsed = new List<IngredientUsed>();
+    protected override async Task OnInitializedAsync()
+    {
+        CakeItem = new CakeCost();
+        IngredientsUsed = new List<IngredientUsed>();
 
-		var ingredients = await LocalStorage.GetItemAsync<List<Ingredient>>("ingredients");
-		if (ingredients != null)
-		{
-			IngredientsList = ingredients;
-			IsIngredients = true;
+        var ingredients = await LocalStorage.GetItemAsync<List<Ingredient>>("ingredients");
+        if (ingredients != null)
+        {
+            IngredientsList = ingredients;
+            IsIngredients = true;
 
-		}
-		else
-		{
-			IsIngredients = false;
-		}
-		Loading = false;
-	}
+        }
+        else
+        {
+            IsIngredients = false;
+        }
+        Loading = false;
+    }
 
-	private async Task OpenAddDialog()
-	{
-		dialogIsOpen = true;
-		AmountUsed = 0;
-	}
+    private async Task OpenAddDialog()
+    {
+        dialogIsOpen = true;
+        AmountUsed = 0;
+    }
 
-	private async Task CloseAddDialog()
-	{
-		dialogIsOpen = false;
-		AmountUsed = 0;
-		SelectedIngredient = null;
-	}
+    private async Task CloseAddDialog()
+    {
+        dialogIsOpen = false;
+        AmountUsed = 0;
+        SelectedIngredient = null;
+    }
 
-	private async Task AddIngredient()
-	{
-		IngredientsUsed.Add(new IngredientUsed(SelectedIngredient,AmountUsed));
-		await CloseAddDialog();
-		await CalcTotals();
-	}
+    private async Task AddIngredient()
+    {
+        IngredientsUsed.Add(new IngredientUsed(SelectedIngredient, AmountUsed));
+        await CloseAddDialog();
+        await CalcTotals();
+    }
+    private async Task SumIngredientTotal()
+    {
+        if (IngredientsUsed != null && IngredientsUsed.Count() > 0)
+        {
+            TotalCost = IngredientsUsed.Sum(x => x.UsageCost);
+        }
+    }
 
-	private async Task SumIngredientTotal()
-	{
-		if (IngredientsUsed != null && IngredientsUsed.Count() > 0)
-		{
-			TotalCost = IngredientsUsed.Sum(x => x.UsageCost);
-		}
-	}
+    private async Task SumLabourCosts()
+    {
 
-	private async Task SumLabourCosts()
-	{
+    }
 
-	}
-
-	private async Task CalcTotals()
-	{
-		await SumIngredientTotal();
-		await SumLabourCosts();
-	}
+    private async Task CalcTotals()
+    {
+        await SumIngredientTotal();
+        await SumLabourCosts();
+    }
 }
